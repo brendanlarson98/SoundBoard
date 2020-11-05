@@ -1,0 +1,124 @@
+
+import matplotlib.pyplot as plt
+from numpy import fft
+import numpy as np
+from scipy import signal
+from scipy.io import wavfile
+from scipy.io.wavfile import read,write
+import sounddevice as sd
+from numpy.fft import rfft, rfftfreq
+import soundfile as sofi
+from scipy.signal import butter, filtfilt, find_peaks, argrelmax
+
+def passes(data, cutoff, fs, N, btype):
+    nyquist = 0.5 * fs
+    wn = cutoff / nyquist
+    b, a = butter(N, wn, btype, analog=False)
+    y = filtfilt(b, a, data)
+    return y
+
+def freq_to_color(frequency):
+    e = (10**12)
+    while frequency <= 400 * e:
+        frequency *= 2
+        frequency_list = []
+        frequency_list.append(frequency)
+        fr = frequency_list[-1]
+        if 670 * e <= fr <= 800 * e:
+            return (238,130,238)
+        elif  620 * e <= fr < 670 * e:
+          return (0,0,255)
+        elif 600 * e <= fr < 620 * e:
+            return (0,255,255)
+        elif 530 * e <= fr < 600 * e:
+            return (0,255,0)
+        elif 510 * e <= fr < 530 * e:
+            return (255,255,0)
+        elif 480 * e <= fr < 510 * e:
+            return (255,165,0)
+        elif 400 * e <= fr < 480 * e:
+            return (255,0,0)
+
+class SoundBoard:
+    def __init__(self, fs=44100, channels=1, time=4):
+        self.channels = channels
+        self.time = time
+        self.fs = fs
+        times = np.linspace(0,self.time, int(self.time * self.fs))
+        self.data = 0
+        self.freq = 0
+        self.fft_lim = 2000
+
+    def load(self, filepath = "mao.wav"):
+        self.data, self.freq = sofi.read(filepath)
+
+    def create(self, path = "mao.wav"):
+        self.data = sd.rec(self.time *self.fs, channels=1, samplerate = self.fs, blocking=True)[:,0]
+        write(path, self.fs, self.data)
+
+    def save(self, path="mao.wav"):
+        write(path, self.fs, self.data)
+
+    def play(self):
+         sd.play(self.data, self.fs, blocking=True)
+
+    def fft(self):
+        fast_ = rfft(self.data)
+        absolute_ = np.abs(fast_)
+        __freq__ = rfftfreq(len(self.data), d=1/self.fs)
+        return __freq__, absolute_
+
+    def get_time(self):
+        times = np.linspace(0, len(self.data)/self.fs, len(self.data))
+        return times
+
+    def rev_play(self):
+        self.data=self.data[::-1]
+        sd.play(self.data, self.fs, blocking = True)
+
+    def rate_play(self, n):
+        sd.play(self.data, n * self.fs, blocking = True)
+
+    def graph_plot(self):
+        plt.plot(self.data, 'r', label="Voltage vs. Time")
+        plt.legend()
+
+    def graph_fft(self):
+        __freq__, absolute_ = Sound_Record.fft(self)
+        plt.plot(__freq__, absolute_, 'b', label="FFT of a Sound File")
+        plt.xlim(0,self.fft_lim)
+        plt.legend()
+
+    def filter_pass(self, cutoff, btype):
+        N = 6
+        __freq__, absolute_ = Sound_Record.fft(self)
+        new_plot = passes(absolute_, cutoff, self.fs, N, btype)
+        plt.plot(abs(new_plot), 'c', label=f'Plot of {btype.title()} Pass Filter')
+        plt.xlim(0,self.fft_lim)
+        plt.legend()
+
+    def spectrograph(self):
+        __freq__, absolute_ = Sound_Record.fft(self)
+        plt.specgram(absolute_, Fs=self.fs)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Frequency (Hz)')
+
+    def peaks(self):
+        __freq__, absolute_ = Sound_Record.fft(self)
+        woot = argrelmax(absolute_, order=60)[0]
+        for val in woot:
+            if val > self.fft_lim or val < 1000:
+                ind = np.where(woot == val)
+                woot = np.delete(woot, ind)
+            else:
+                pass
+        return woot
+
+    def color(self):
+        lis = Sound_Record.peaks(self)
+        for item in lis:
+            frequency = item
+            colors = freq_to_color(frequency)
+            print(f'Frequency: {frequency} Hz')
+            plt.imshow([[colors]])
+            plt.show()
