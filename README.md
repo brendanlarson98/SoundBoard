@@ -45,15 +45,15 @@
                 return (255,0,0)
                 
 ### Our main SoundBoard class, designed to create a soundfile and perform operations on it. We have a standard sampling rate of 44100 Hz.
-class SoundBoard:
-    def __init__(self, fs=44100, channels=1, time=4):
-        self.channels = channels
-        self.time = time
-        self.fs = fs
-        times = np.linspace(0,self.time, int(self.time * self.fs))
-        self.data = 0
-        self.freq = 0
-        self.fft_lim = 2000
+    class SoundBoard:
+        def __init__(self, fs=44100, channels=1, time=4):
+            self.channels = channels
+            self.time = time
+            self.fs = fs
+            times = np.linspace(0,self.time, int(self.time * self.fs))
+            self.data = 0
+            self.freq = 0
+            self.fft_lim = 2000
         
 #### The load function will load the data which is on a wavfile.   
     def load(self, filepath = "mao.wav"):
