@@ -56,16 +56,16 @@
             self.fft_lim = 2000
         
 #### The load function will load the data which is on a wavfile.   
-    def load(self, filepath = "mao.wav"):
+    def load(self, filepath = "filename.wav"):
         self.data, self.freq = sofi.read(filepath)
         
 #### In create, we record a piece of data and then write the data to our path.        
-    def create(self, path = "mao.wav"):
+    def create(self, path = "filename.wav"):
         self.data = sd.rec(self.time *self.fs, channels=1, samplerate = self.fs, blocking=True)[:,0]
         write(path, self.fs, self.data)
         
 #### The save function writes over the data in the wavefile with whatever the data is now
-    def save(self, path="mao.wav"):
+    def save(self, path="filename.wav"):
         write(path, self.fs, self.data)
         
 #### The play function plays the data in the wavfile from your speakers.        
